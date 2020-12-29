@@ -20,7 +20,7 @@ from setuptools import setup
 
 setup(
     name="jack-send-midi",
-    version="0.1.1",
+    version="0.1.2",
     description="Send realtime-safe MIDI events with JACK.",
     author="taylor.fish",
     author_email="contact@taylor.fish",

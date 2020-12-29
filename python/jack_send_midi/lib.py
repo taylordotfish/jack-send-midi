@@ -51,7 +51,7 @@ class Client:
             clib.client_destroy(self._client)
             self._client = None
 
-    def __enter__(self) -> Client:
+    def __enter__(self) -> "Client":
         return self
 
     def __exit__(self):
