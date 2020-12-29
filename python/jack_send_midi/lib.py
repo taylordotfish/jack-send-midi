@@ -51,7 +51,7 @@ class Client:
             clib.client_destroy(self._client)
             self._client = None
 
-    def __enter__(self):
+    def __enter__(self) -> Client:
         return self
 
     def __exit__(self):
@@ -66,7 +66,7 @@ class NewClientError(Exception):
         self.status = status
         self.jack_status = jack_status
 
-    def __str__(self):
+    def __str__(self) -> str:
         MESSAGES = [
             # 0
             lambda: "unknown error",
