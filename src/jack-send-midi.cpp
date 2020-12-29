@@ -70,14 +70,14 @@ using UniqueJackClient = std::unique_ptr<jack_client_t, JackClientDeleter>;
 class Client {
     public:
     Client(UniqueJackClient client, jack_port_t* port) :
-        m_client(std::move(client)),
+        m_client(client.release()),
         m_port(port)
     {
     }
 
     ~Client() {
         // First, close the JACK client.
-        m_client = nullptr;
+        UniqueJackClient{m_client};
         free_messages(m_head.load(std::memory_order_relaxed));
     }
 
@@ -125,7 +125,7 @@ class Client {
     }
 
     private:
-    UniqueJackClient m_client;
+    jack_client_t* m_client = nullptr;
     jack_port_t* m_port = nullptr;
     std::atomic<Message*> m_head = nullptr;
     std::atomic<Message*> m_last_processed = nullptr;
