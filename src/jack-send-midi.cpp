@@ -75,6 +75,12 @@ class Client {
     {
     }
 
+    ~Client() {
+        // First, close the JACK client.
+        m_client = nullptr;
+        free_messages(m_head.load(std::memory_order_relaxed));
+    }
+
     void send_message(unsigned char* data, std::size_t length) {
         auto message = std::make_unique<Message>(Message {
             /* .next = */ m_head.load(),
@@ -123,7 +129,6 @@ class Client {
     jack_port_t* m_port = nullptr;
     std::atomic<Message*> m_head = nullptr;
     std::atomic<Message*> m_last_processed = nullptr;
-    Message* m_tail = nullptr;
 
     void gc() {
         auto message = m_last_processed.load(std::memory_order_acquire);
@@ -134,16 +139,18 @@ class Client {
         // Detach m_last_processed_message from its next message.
         auto next = message->next;
         message->next = nullptr;
-        message = next;
+        free_messages(next);
+    }
 
-        while (message) {
-            auto next = message->next;
+    static void free_messages(Message* head) {
+        while (head) {
+            auto next = head->next;
             if constexpr (debug) {
                 std::cerr << "[jack-send-midi] freeing message: ";
-                std::cerr << *message << "\n";
+                std::cerr << *head << "\n";
             }
-            std::unique_ptr<Message>{message};
-            message = next;
+            std::unique_ptr<Message>{head};
+            head = next;
         }
     }
 };
