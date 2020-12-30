@@ -172,9 +172,7 @@ Client* client_new(const char* name, Status* status, int* jack_status) {
         JackNullOption,
         &real_jack_status
     );
-    if (real_jack_status) {
-        if (jack_status) *jack_status = real_jack_status;
-    }
+    if (jack_status) *jack_status = real_jack_status;
     if (!raw_client) {
         if (status) *status = STATUS_CLIENT_OPEN_FAILED;
         return nullptr;
