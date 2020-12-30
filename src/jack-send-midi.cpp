@@ -60,7 +60,7 @@ struct Message {
 
 class JackClientDeleter {
     public:
-    void operator()(jack_client_t* client) {
+    void operator()(jack_client_t* client) const {
         jack_client_close(client);
     }
 };
