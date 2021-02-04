@@ -25,7 +25,7 @@ LIB_NAME = lib$(NAME).so
 ABI_VERSION = 0
 HEADER = $(NAME).h
 
-BINARY = $(NAME)
+BINARY = $(LIB_NAME)
 OBJECTS = $(addsuffix .o,$(basename $(shell \
 	find src -type f -name '*.cpp' ! -name main.cpp \
 )))
