@@ -1,4 +1,4 @@
-# Copyright (C) 2020 taylor.fish <contact@taylor.fish>
+# Copyright (C) 2018, 2020 taylor.fish <contact@taylor.fish>
 #
 # This file is part of jack-send-midi.
 #
