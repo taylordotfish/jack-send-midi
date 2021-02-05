@@ -8,8 +8,8 @@
 # Note that the above copyright notice applies only to the code in this
 # file: jack-send-midi, which this code depends on, is licensed under version
 # 3 or later of the GNU General Public License. Thus, any version of this
-# code that links to or is otherwise a derived work of jack-send-midi must
-# be distributed in accordance with jack-send-midi's license.
+# code that links to or is otherwise a derived work of jack-send-midi may be
+# distributed only in accordance with jack-send-midi's license.
 
 from jack_send_midi import Client
 import time
