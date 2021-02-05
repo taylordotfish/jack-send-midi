@@ -136,7 +136,7 @@ class Client {
             return;
         }
 
-        // Detach m_last_processed_message from its next message.
+        // Detach m_last_processed from its next message.
         auto next = message->next;
         message->next = nullptr;
         free_messages(next);
