@@ -78,6 +78,9 @@ class Client {
     ~Client() {
         // First, close the JACK client.
         UniqueJackClient{m_client};
+        // Since the client is now closed, no other threads will access the
+        // data in this class, so we can perform a relaxed load and free all
+        // messages.
         free_messages(m_head.load(std::memory_order_relaxed));
     }
 
@@ -98,12 +101,15 @@ class Client {
             std::cerr << "[jack-send-midi] sending message: ";
             std::cerr << *message << "\n";
         }
-        m_head.store(message, std::memory_order_relaxed);
+        m_head.store(message, std::memory_order_release);
         gc();
     }
 
     int process(jack_nframes_t nframes) {
-        auto head = m_head.load(std::memory_order_relaxed);
+        auto head = m_head.load(std::memory_order_acquire);
+        // We can perform a relaxed load here because no other thread writes
+        // to `m_last_processed` -- the only store appears later in this same
+        // function.
         auto end = m_last_processed.load(std::memory_order_relaxed);
         auto buffer = jack_port_get_buffer(m_port, nframes);
         jack_midi_clear_buffer(buffer);
@@ -136,7 +142,11 @@ class Client {
             return;
         }
 
-        // Detach m_last_processed from its next message.
+        // Detach `m_last_processed` from its next message. We have to keep
+        // `m_last_processed` itself alive because its address is used by
+        // `process()` to know when to stop traversing the linked list. If we
+        // freed `m_last_processed`, its address could be reused and `process`
+        // would stop too early.
         auto next = message->next;
         message->next = nullptr;
         free_messages(next);
