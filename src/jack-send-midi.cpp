@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 taylor.fish <contact@taylor.fish>
+ * Copyright (C) 2020-2022 taylor.fish <contact@taylor.fish>
  *
  * This file is part of jack-send-midi.
  *
@@ -86,21 +86,35 @@ class Client {
 
     void send_message(unsigned char* data, std::size_t length) {
         auto message = std::make_unique<Message>(Message {
-            /* .next = */ m_head.load(),
+            /* .next = */ nullptr,
             /* .data = */ {},
             /* .length = */ static_cast<std::uint_least8_t>(
                 std::min(length, max_message_length)
             ),
         }).release();
+
         std::memcpy(
             message->data,
             data,
             message->length
         );
+
         if constexpr (debug) {
             std::cerr << "[jack-send-midi] sending message: ";
             std::cerr << *message << "\n";
         }
+
+        auto head = m_head.load(std::memory_order_relaxed);
+        while (true) {
+            message->next = head;
+            m_head.compare_exchange_weak(
+                head,
+                message,
+                std::memory_order_release,
+                std::memory_order_relaxed
+            );
+        }
+
         m_head.store(message, std::memory_order_release);
         gc();
     }
@@ -135,8 +149,17 @@ class Client {
     jack_port_t* m_port = nullptr;
     std::atomic<Message*> m_head = nullptr;
     std::atomic<Message*> m_last_processed = nullptr;
+    std::atomic<bool> m_gc_running = false;
 
     void gc() {
+        if (!m_gc_running.exchange(true, std::memory_order_acquire)) {
+            gc_impl();
+            m_gc_running.store(false, std::memory_order_release);
+        }
+    }
+
+    // The `m_gc_running` lock must be held by this thread.
+    void gc_impl() {
         auto message = m_last_processed.load(std::memory_order_acquire);
         if (!message) {
             return;
