@@ -1,4 +1,4 @@
-# Copyright (C) 2018, 2020 taylor.fish <contact@taylor.fish>
+# Copyright (C) 2018, 2020, 2026 taylor.fish <contact@taylor.fish>
 #
 # This file is part of jack-send-midi.
 #
@@ -39,8 +39,6 @@ LDFLAGS = -shared -Wl,--no-undefined,--no-allow-shlib-undefined \
           -Wl,-soname,$(LIB_NAME).$(ABI_VERSION)
 LDLIBS = -ljack
 
-
-
 ifeq ($(DEBUG), 1)
 	CXXFLAGS += -Og -ggdb
 else
@@ -48,16 +46,11 @@ else
 	LDFLAGS += -Ofast -flto
 endif
 
-
-
 BINARY := $(addprefix $(BUILD_DIR)/,$(BINARY))
 OBJECTS := $(addprefix $(BUILD_DIR)/,$(OBJECTS))
 
 BUILD_SUBDIRS = $(sort $(dir $(OBJECTS)))
 BUILD_DIRS = $(BUILD_DIR) $(BUILD_SUBDIRS)
-
-$(BUILD_DIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 
 
@@ -66,6 +59,9 @@ all: $(BINARY)
 
 $(BINARY): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD_DIR)/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 -include $(OBJECTS:.o=.d)
 
@@ -81,7 +77,7 @@ install: $(BINARY) uninstall
 	cp $(BINARY) /usr/local/lib/$(LIB_NAME).$(ABI_VERSION)
 	ln -s $(LIB_NAME).$(ABI_VERSION) /usr/local/lib/$(LIB_NAME)
 	cp -r src/$(HEADER) /usr/local/include/
-	ldconfig
+	sudo=; [ "$$(id -u)" -eq 0 ] || sudo=sudo; $$sudo ldconfig
 
 .PHONY: uninstall
 uninstall:
